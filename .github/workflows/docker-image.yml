@@ -7,12 +7,29 @@ on:
     branches: [ "main" ]
 
 jobs:
-
-  build:
-
-    runs-on: ubuntu-latest
-
+  aarch64_job:
+    # The host should always be Linux
+    runs-on: ubuntu-20.04
+    name: Build on ubuntu-20.04 aarch64
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag kuma-vault-sidecar:$(date +%s)
+      - uses: actions/checkout@v2.1.0
+      - uses: uraimo/run-on-arch-action@v2
+        name: Run commands
+        id: runcmd
+        with:
+          arch: aarch64
+          distro: ubuntu20.04
+
+          # Not required, but speeds up builds by storing container images in
+          # a GitHub package registry.
+          #githubToken: ${{ github.token }}
+
+          # Set an output parameter `uname` for use in subsequent steps
+          run: |
+            uname -a
+            echo ::set-output name=uname::$(uname -a)
+
+      - name: Get the output
+        # Echo the `uname` output parameter from the `runcmd` step
+        run: |
+          echo "The uname output was ${{ steps.runcmd.outputs.uname }}"
